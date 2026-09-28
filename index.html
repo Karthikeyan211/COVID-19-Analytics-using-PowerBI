@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COVID-19 Analytics & Power BI Data Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦠</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="glass top">
+  <h1><i class="fa-solid fa-virus-covid"></i> COVID-19 Data Studio</h1>
+  <label class="sel">Country
+    <select id="country"><option value="ALL">All countries</option></select>
+  </label>
+  <nav id="tabs">
+    <button data-tab="exec" class="on"><i class="fa-solid fa-chart-line"></i> Summary</button>
+    <button data-tab="map"><i class="fa-solid fa-earth-americas"></i> Map</button>
+    <button data-tab="vax"><i class="fa-solid fa-syringe"></i> Vaccines &amp; Variants</button>
+    <button data-tab="dax"><i class="fa-solid fa-diagram-project"></i> DAX Studio</button>
+    <button data-tab="etl"><i class="fa-solid fa-database"></i> ETL &amp; Export</button>
+  </nav>
+</header>
+<main>
+<p id="err" class="glass" hidden>Could not load data/covid_dashboard_data.json. Run the ETL script and serve this folder over HTTP.</p>
+
+<section id="tab-exec">
+  <div class="kpis">
+    <div class="glass kpi"><span>Total cases</span><b id="k-cases">–</b><em id="t-cases"></em></div>
+    <div class="glass kpi"><span>Active cases (last 14 days)</span><b id="k-active">–</b><em id="t-active"></em></div>
+    <div class="glass kpi"><span>Deaths</span><b id="k-deaths">–</b><em id="t-deaths"></em></div>
+    <div class="glass kpi"><span>Vaccinated population</span><b id="k-vax">–</b><em id="t-vax"></em></div>
+  </div>
+  <div class="grid">
+    <div class="glass card wide"><h2>Daily cases and 7-day average</h2><div class="ch"><canvas id="cDaily"></canvas></div></div>
+    <div class="glass card"><h2>Monthly cases by wave</h2><div class="ch"><canvas id="cMonthly"></canvas></div></div>
+    <div class="glass card"><h2>Monthly deaths and vaccination</h2><div class="ch"><canvas id="cDeaths"></canvas></div></div>
+  </div>
+</section>
+
+<section id="tab-map" hidden>
+  <div class="glass card">
+    <label class="sel">Show <select id="mapMetric">
+      <option value="cases">Cases per 100K people</option>
+      <option value="vax">Vaccination progress</option></select></label>
+    <div id="map"></div>
+  </div>
+</section>
+
+<section id="tab-vax" hidden>
+  <div class="grid">
+    <div class="glass card wide"><h2>Variant share of new cases (%)</h2><div class="ch"><canvas id="cVariants"></canvas></div></div>
+    <div class="glass card wide"><h2>Vaccine coverage by country (latest)</h2><div class="ch"><canvas id="cVaxCountries"></canvas></div></div>
+  </div>
+</section>
+
+<section id="tab-dax" hidden>
+  <div class="glass card">
+    <h2>Star schema</h2>
+    <svg viewBox="0 0 760 350" class="schema" role="img" aria-label="Star schema diagram">
+      <g stroke="#3b82f6" stroke-width="2" fill="none"><path d="M140 80V150"/><path d="M300 55L240 170"/><path d="M460 55L520 170"/><path d="M300 295L240 220"/><path d="M460 295L520 220"/></g>
+      <g class="bx dim"><rect x="40" y="10" width="200" height="70" rx="12"/><text x="140" y="38">dim_variant</text><text x="140" y="60" class="s">VariantID, VariantName</text></g>
+      <g class="bx dim"><rect x="300" y="10" width="160" height="70" rx="12"/><text x="380" y="38">dim_country</text><text x="380" y="60" class="s">CountryCode, Population</text></g>
+      <g class="bx dim"><rect x="300" y="270" width="160" height="70" rx="12"/><text x="380" y="298">dim_date</text><text x="380" y="320" class="s">DateKey, Date, Year</text></g>
+      <g class="bx fact"><rect x="40" y="150" width="200" height="90" rx="12"/><text x="140" y="182">fact_covid_daily</text><text x="140" y="206" class="s">NewCases, NewDeaths</text><text x="140" y="224" class="s">MovingAvg7DayCases</text></g>
+      <g class="bx fact"><rect x="520" y="150" width="200" height="90" rx="12"/><text x="620" y="182">fact_vaccinations</text><text x="620" y="206" class="s">TotalVaccinations</text><text x="620" y="224" class="s">PeopleVaccinated</text></g>
+    </svg>
+    <p class="muted">Each dimension has a one-to-many relationship (1:*) to its fact tables.</p>
+  </div>
+  <div class="glass card">
+    <div class="row"><input id="daxSearch" type="search" placeholder="Search measures, e.g. YTD"><select id="daxCat"><option value="">All categories</option></select></div>
+    <div id="daxList"></div>
+  </div>
+</section>
+
+<section id="tab-etl" hidden>
+  <div class="grid">
+    <div class="glass card"><h2>Download processed data</h2><ul id="files" class="files"></ul></div>
+    <div class="glass card"><h2>Pipeline log</h2><pre id="log"></pre></div>
+  </div>
+</section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

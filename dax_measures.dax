@@ -1,0 +1,83 @@
+// CATEGORY: Core KPIs
+
+Total Cases = SUM(fact_covid_daily[NewCases])
+
+Total Deaths = SUM(fact_covid_daily[NewDeaths])
+
+Global Mortality Rate % = DIVIDE([Total Deaths], [Total Cases])
+
+Active Cases (14d Est.) =
+CALCULATE([Total Cases], DATESINPERIOD(dim_date[Date], MAX(dim_date[Date]), -14, DAY))
+
+Cases per 100K = DIVIDE([Total Cases], SUM(dim_country[Population])) * 100000
+
+Deaths per 100K = DIVIDE([Total Deaths], SUM(dim_country[Population])) * 100000
+
+Avg Positivity Rate = AVERAGE(fact_covid_daily[PositivityRate])
+
+// CATEGORY: Rolling & Time Intelligence
+
+7-Day Avg Cases =
+AVERAGEX(DATESINPERIOD(dim_date[Date], MAX(dim_date[Date]), -7, DAY), [Total Cases])
+
+7-Day Avg Deaths =
+AVERAGEX(DATESINPERIOD(dim_date[Date], MAX(dim_date[Date]), -7, DAY), [Total Deaths])
+
+14-Day Avg Cases =
+AVERAGEX(DATESINPERIOD(dim_date[Date], MAX(dim_date[Date]), -14, DAY), [Total Cases])
+
+Cases Prior Month = CALCULATE([Total Cases], DATEADD(dim_date[Date], -1, MONTH))
+
+Cases MoM Growth % = DIVIDE([Total Cases] - [Cases Prior Month], [Cases Prior Month])
+
+YTD Cases = TOTALYTD([Total Cases], dim_date[Date])
+
+YTD Deaths = TOTALYTD([Total Deaths], dim_date[Date])
+
+Cases Same Period LY = CALCULATE([Total Cases], SAMEPERIODLASTYEAR(dim_date[Date]))
+
+Cases YoY Growth % = DIVIDE([Total Cases] - [Cases Same Period LY], [Cases Same Period LY])
+
+Cumulative Cases =
+CALCULATE([Total Cases], FILTER(ALL(dim_date), dim_date[Date] <= MAX(dim_date[Date])))
+
+Peak Daily Cases = MAXX(VALUES(dim_date[Date]), [Total Cases])
+
+// CATEGORY: Vaccination Metrics
+
+Total Doses Administered =
+CALCULATE(SUM(fact_vaccinations[TotalVaccinations]), LASTDATE(dim_date[Date]))
+
+People Vaccinated =
+CALCULATE(SUM(fact_vaccinations[PeopleVaccinated]), LASTDATE(dim_date[Date]))
+
+People Fully Vaccinated =
+CALCULATE(SUM(fact_vaccinations[PeopleFullyVaccinated]), LASTDATE(dim_date[Date]))
+
+Booster Doses =
+CALCULATE(SUM(fact_vaccinations[BoosterDoses]), LASTDATE(dim_date[Date]))
+
+At Least One Dose % = DIVIDE([People Vaccinated], SUM(dim_country[Population]))
+
+Fully Vaccinated % = DIVIDE([People Fully Vaccinated], SUM(dim_country[Population]))
+
+Booster Coverage % = DIVIDE([Booster Doses], SUM(dim_country[Population]))
+
+Doses per 100 People = DIVIDE([Total Doses Administered], SUM(dim_country[Population])) * 100
+
+// CATEGORY: Variant Analysis
+
+Omicron Cases = CALCULATE([Total Cases], dim_variant[VariantName] = "Omicron")
+
+Omicron Share % = DIVIDE([Omicron Cases], [Total Cases])
+
+Delta Share % = DIVIDE(CALCULATE([Total Cases], dim_variant[VariantName] = "Delta"), [Total Cases])
+
+Variant Dominance Index =
+SUMX(
+    VALUES(dim_variant[VariantName]),
+    POWER(DIVIDE(CALCULATE([Total Cases]), [Total Cases]), 2)
+)
+
+Dominant Variant =
+MAXX(TOPN(1, VALUES(dim_variant[VariantName]), CALCULATE([Total Cases])), dim_variant[VariantName])

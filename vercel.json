@@ -1,0 +1,5 @@
+{
+  "outputDirectory": "web_dashboard",
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
